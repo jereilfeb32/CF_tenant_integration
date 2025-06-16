@@ -1,0 +1,752 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VPC stack with subnets, route tables, IGW, and SGs using parameters.
+
+Parameters:
+  ProjectName:
+    Type: String
+  Owner:
+    Type: String
+  BusinessUnit:
+    Type: String
+  VpcCidr:
+    Type: String
+  Region:
+    Type: String
+  AvailabilityZones:
+    Type: CommaDelimitedList
+  PublicSubnetCidrs:
+    Type: CommaDelimitedList
+  PrivateSubnetCidrs:
+    Type: CommaDelimitedList
+  ALBSubnetCidrs:
+    Type: CommaDelimitedList
+  GWLBSubnetCidrs:
+    Type: CommaDelimitedList
+  SFTPSubnetCidrs:
+    Type: CommaDelimitedList
+  APIGWSubnetCidrs:
+    Type: CommaDelimitedList
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-vpc"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-igw"
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-rt-az1"
+
+  PublicRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-rt-az2"
+
+  PublicRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-rt-az3"
+
+  DefaultPublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  DefaultPublicRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  DefaultPublicRoute3:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-rt-az1"
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-rt-az2"
+
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-rt-az3"
+
+  ALBRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-rt-az1"
+
+  ALBRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-rt-az2"
+
+  ALBRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-rt-az3"
+
+  GWLBRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-rt-az1"
+
+  GWLBRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-rt-az2"
+
+  GWLBRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-rt-az3"
+
+  SFTPRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-rt-az1"
+
+  SFTPRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-rt-az2"
+
+  SFTPRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-rt-az3"
+
+  APIGWRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-rt-az1"
+
+  APIGWRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-rt-az2"
+
+  APIGWRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-rt-az3"
+
+  # Public Subnets
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref PublicSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-subnet-az1"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref PublicSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-subnet-az2"
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref PublicSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-subnet-az3"
+
+  # Private Subnets
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref PrivateSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-subnet-az1"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref PrivateSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-subnet-az2"
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref PrivateSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-subnet-az3"
+
+  # ALB Subnets
+  ALBSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref ALBSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-subnet-az1"
+
+  ALBSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref ALBSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-subnet-az2"
+
+  ALBSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref ALBSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-subnet-az3"
+
+  # GWLB Subnets
+  GWLBSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref GWLBSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-subnet-az1"
+
+  GWLBSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref GWLBSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-subnet-az2"
+
+  GWLBSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref GWLBSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-gwlb-subnet-az3"
+
+  # SFTP Subnets
+  SFTPSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref SFTPSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-subnet-az1"
+
+  SFTPSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref SFTPSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-subnet-az2"
+
+  SFTPSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref SFTPSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-subnet-az3"
+
+  # APIGW Subnets
+  APIGWSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Ref APIGWSubnetCidrs]
+      AvailabilityZone: !Select [0, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-subnet-az1"
+
+  APIGWSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Ref APIGWSubnetCidrs]
+      AvailabilityZone: !Select [1, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-subnet-az2"
+
+  APIGWSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Ref APIGWSubnetCidrs]
+      AvailabilityZone: !Select [2, !Ref AvailabilityZones]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-subnet-az3"
+
+  # Route Table Associations
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable1
+
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable2
+
+  PublicSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable3
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable3
+
+  ALBSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ALBSubnet1
+      RouteTableId: !Ref ALBRouteTable1
+
+  ALBSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ALBSubnet2
+      RouteTableId: !Ref ALBRouteTable2
+
+  ALBSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ALBSubnet3
+      RouteTableId: !Ref ALBRouteTable3
+
+  GWLBSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GWLBSubnet1
+      RouteTableId: !Ref GWLBRouteTable1
+
+  GWLBSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GWLBSubnet2
+      RouteTableId: !Ref GWLBRouteTable2
+
+  GWLBSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GWLBSubnet3
+      RouteTableId: !Ref GWLBRouteTable3
+
+  SFTPSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SFTPSubnet1
+      RouteTableId: !Ref SFTPRouteTable1
+
+  SFTPSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SFTPSubnet2
+      RouteTableId: !Ref SFTPRouteTable2
+
+  SFTPSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SFTPSubnet3
+      RouteTableId: !Ref SFTPRouteTable3
+
+  APIGWSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref APIGWSubnet1
+      RouteTableId: !Ref APIGWRouteTable1
+
+  APIGWSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref APIGWSubnet2
+      RouteTableId: !Ref APIGWRouteTable2
+
+  APIGWSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref APIGWSubnet3
+      RouteTableId: !Ref APIGWRouteTable3
+
+Outputs:
+  VpcId:
+    Description: The ID of the created VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${ProjectName}-VpcId"
+
+  InternetGatewayId:
+    Description: The ID of the Internet Gateway
+    Value: !Ref InternetGateway
+    Export:
+      Name: !Sub "${ProjectName}-InternetGatewayId"
+
+  # Public Subnets
+  PublicSubnet1Id:
+    Description: Public Subnet AZ1 ID
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-PublicSubnet1Id"
+
+  PublicSubnet2Id:
+    Description: Public Subnet AZ2 ID
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-PublicSubnet2Id"
+
+  PublicSubnet3Id:
+    Description: Public Subnet AZ3 ID
+    Value: !Ref PublicSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-PublicSubnet3Id"
+
+  # Private Subnets
+  PrivateSubnet1Id:
+    Description: Private Subnet AZ1 ID
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-PrivateSubnet1Id"
+
+  PrivateSubnet2Id:
+    Description: Private Subnet AZ2 ID
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-PrivateSubnet2Id"
+
+  PrivateSubnet3Id:
+    Description: Private Subnet AZ3 ID
+    Value: !Ref PrivateSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-PrivateSubnet3Id"
+
+  # ALB Subnets
+  ALBSubnet1Id:
+    Description: ALB Subnet AZ1 ID
+    Value: !Ref ALBSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-ALBSubnet1Id"
+
+  ALBSubnet2Id:
+    Description: ALB Subnet AZ2 ID
+    Value: !Ref ALBSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-ALBSubnet2Id"
+
+  ALBSubnet3Id:
+    Description: ALB Subnet AZ3 ID
+    Value: !Ref ALBSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-ALBSubnet3Id"
+
+  # GWLB Subnets
+  GWLBSubnet1Id:
+    Description: GWLB Subnet AZ1 ID
+    Value: !Ref GWLBSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-GWLBSubnet1Id"
+
+  GWLBSubnet2Id:
+    Description: GWLB Subnet AZ2 ID
+    Value: !Ref GWLBSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-GWLBSubnet2Id"
+
+  GWLBSubnet3Id:
+    Description: GWLB Subnet AZ3 ID
+    Value: !Ref GWLBSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-GWLBSubnet3Id"
+
+  # SFTP Subnets
+  SFTPSubnet1Id:
+    Description: SFTP Subnet AZ1 ID
+    Value: !Ref SFTPSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-SFTPSubnet1Id"
+
+  SFTPSubnet2Id:
+    Description: SFTP Subnet AZ2 ID
+    Value: !Ref SFTPSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-SFTPSubnet2Id"
+
+  SFTPSubnet3Id:
+    Description: SFTP Subnet AZ3 ID
+    Value: !Ref SFTPSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-SFTPSubnet3Id"
+
+  # APIGW Subnets
+  APIGWSubnet1Id:
+    Description: APIGW Subnet AZ1 ID
+    Value: !Ref APIGWSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-APIGWSubnet1Id"
+
+  APIGWSubnet2Id:
+    Description: APIGW Subnet AZ2 ID
+    Value: !Ref APIGWSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-APIGWSubnet2Id"
+
+  APIGWSubnet3Id:
+    Description: APIGW Subnet AZ3 ID
+    Value: !Ref APIGWSubnet3
+    Export:
+      Name: !Sub "${ProjectName}-APIGWSubnet3Id"
+
+  # Route Tables
+  PublicRouteTable1Id:
+    Description: Public Route Table AZ1 ID
+    Value: !Ref PublicRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-PublicRouteTable1Id"
+
+  PublicRouteTable2Id:
+    Description: Public Route Table AZ2 ID
+    Value: !Ref PublicRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-PublicRouteTable2Id"
+
+  PublicRouteTable3Id:
+    Description: Public Route Table AZ3 ID
+    Value: !Ref PublicRouteTable3
+    Export:
+      Name: !Sub "${ProjectName}-PublicRouteTable3Id"
+
+  PrivateRouteTable1Id:
+    Description: Private Route Table AZ1 ID
+    Value: !Ref PrivateRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-PrivateRouteTable1Id"
+
+  PrivateRouteTable2Id:
+    Description: Private Route Table AZ2 ID
+    Value: !Ref PrivateRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-PrivateRouteTable2Id"
+
+  PrivateRouteTable3Id:
+    Description: Private Route Table AZ3 ID
+    Value: !Ref PrivateRouteTable3
+    Export:
+      Name: !Sub "${ProjectName}-PrivateRouteTable3Id"
+
+  ALBRouteTable1Id:
+    Description: ALB Route Table AZ1 ID
+    Value: !Ref ALBRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-ALBRouteTable1Id"
+
+  ALBRouteTable2Id:
+    Description: ALB Route Table AZ2 ID
+    Value: !Ref ALBRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-ALBRouteTable2Id"
+
+  ALBRouteTable3Id:
+    Description: ALB Route Table AZ3 ID
+    Value: !Ref ALBRouteTable3
+    Export:
+      Name: !Sub "${ProjectName}-ALBRouteTable3Id"
+
+  GWLBRouteTable1Id:
+    Description: GWLB Route Table AZ1 ID
+    Value: !Ref GWLBRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-GWLBRouteTable1Id"
+
+  GWLBRouteTable2Id:
+    Description: GWLB Route Table AZ2 ID
+    Value: !Ref GWLBRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-GWLBRouteTable2Id"
+
+  GWLBRouteTable3Id:
+    Description: GWLB Route Table AZ3 ID
+    Value: !Ref GWLBRouteTable3
+    Export:
+      Name: !Sub "${ProjectName}-GWLBRouteTable3Id"
+
+  SFTPRouteTable1Id:
+    Description: SFTP Route Table AZ1 ID
+    Value: !Ref SFTPRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-SFTPRouteTable1Id"
+
+  SFTPRouteTable2Id:
+    Description: SFTP Route Table AZ2 ID
+    Value: !Ref SFTPRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-SFTPRouteTable2Id"
+
+  SFTPRouteTable3Id:
+    Description: SFTP Route Table AZ3 ID
+    Value: !Ref SFTPRouteTable3
+    Export:
+      Name: !Sub "${ProjectName}-SFTPRouteTable3Id"
+
+  APIGWRouteTable1Id:
+    Description: APIGW Route Table AZ1 ID
+    Value: !Ref APIGWRouteTable1
+    Export:
+      Name: !Sub "${ProjectName}-APIGWRouteTable1Id"
+
+  APIGWRouteTable2Id:
+    Description: APIGW Route Table AZ2 ID
+    Value: !Ref APIGWRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-APIGWRouteTable2Id"
+
+  APIGWRouteTable3Id:
+    Description: APIGW Route Table AZ3 ID
+    Value: !Ref APIGWRouteTable2
+    Export:
+      Name: !Sub "${ProjectName}-APIGWRouteTable3Id"
+
+

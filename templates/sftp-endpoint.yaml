@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SFTP (AWS Transfer Family) VPC Interface Endpoint in multiple AZs
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the SFTP VPC Endpoint will be deployed
+
+  SFTPSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs for the SFTP VPC Endpoint
+
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group to associate with the SFTP VPC Endpoint
+
+Resources:
+  SFTPVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.transfer.server"
+      SubnetIds: !Ref SFTPSubnetIds
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-sftp-endpoint"
+
+Outputs:
+  SFTPVpcEndpointId:
+    Description: The ID of the VPC Endpoint for SFTP
+    Value: !Ref SFTPVpcEndpoint
+    Export:
+      Name: !Sub "${ProjectName}-SFTPVpcEndpointId"

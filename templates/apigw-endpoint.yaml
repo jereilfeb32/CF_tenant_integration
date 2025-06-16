@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: API Gateway VPC Endpoint in multiple AZs
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the GWLBe will be deployed
+
+  APIGWSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs for the Gateway Load Balancer Endpoint
+
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group to associate with the API Gateway VPC Endpoint
+
+Resources:
+  ApiGwVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.execute-api"
+      SubnetIds: !Ref APIGWSubnetIds
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-apigw-endpoint"
+
+Outputs:
+  ApiGwVpcEndpointId:
+    Description: The ID of the VPC Endpoint for API Gateway
+    Value: !Ref ApiGwVpcEndpoint
+    Export:
+      Name: !Sub "${ProjectName}-ApiGwVpcEndpointId"

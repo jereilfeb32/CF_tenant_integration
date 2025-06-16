@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Gateway Load Balancer Endpoints for Spoke VPC (multiple subnets)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name for tagging resources
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Spoke VPC ID to attach the GWLB Endpoints to
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets to place the GWLB Endpoints in (must be three subnets)
+
+  ServiceName:
+    Type: String
+    Description: The name of the shared VPC Endpoint Service (from the hub GWLB)
+
+Resources:
+  GWLBEndpoint1:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Select [0, !Ref SubnetIds]
+      VpcEndpointType: GatewayLoadBalancer
+      ServiceName: !Ref ServiceName
+
+  GWLBEndpoint2:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Select [1, !Ref SubnetIds]
+      VpcEndpointType: GatewayLoadBalancer
+      ServiceName: !Ref ServiceName
+
+  GWLBEndpoint3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Select [2, !Ref SubnetIds]
+      VpcEndpointType: GatewayLoadBalancer
+      ServiceName: !Ref ServiceName
+
+Outputs:
+  GWLBEId1:
+    Description: The ID of the first Gateway Load Balancer Endpoint
+    Value: !Ref GWLBEndpoint1
+
+  GWLBEId2:
+    Description: The ID of the second Gateway Load Balancer Endpoint
+    Value: !Ref GWLBEndpoint2
+
+  GWLBEId3:
+    Description: The ID of the third Gateway Load Balancer Endpoint
+    Value: !Ref GWLBEndpoint3

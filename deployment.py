@@ -2,6 +2,7 @@ import boto3
 import sys
 import os
 import logging
+import subprocess
 import argparse
 from botocore.exceptions import ClientError
 
@@ -106,7 +107,7 @@ stack_definitions = [
         "template": "gwlb-endpoint.yaml",
         "parameters": [
             {"ParameterKey": "ProjectName", "ParameterValue": "SaaS"},
-            {"ParameterKey": "ServiceName", "ParameterValue": "com.amazonaws.vpce.ap-southeast-1.vpce-svc-0dfb94683dffb962e"}
+            {"ParameterKey": "ServiceName", "ParameterValue": "com.amazonaws.vpce.ap-southeast-1.vpce-svc-0eaa5d68deb2856ba"}
         ],
         "parameters_from_outputs": [
             {
@@ -129,10 +130,22 @@ stack_definitions = [
             {"output_key": "SFTPSecurityGroupId", "parameter_key": "SecurityGroupId"}
         ],
         "outputs": ["SFTPVpcEndpointId"]
-    }
+    },
+{
+    "name": "LZs3VpcEndpointStack",
+    "template": "s3-vpc-endpoint.yaml", 
+    "parameters": [
+        {"ParameterKey": "ProjectName", "ParameterValue": "SaaS"},
+        {"ParameterKey": "VpcId", "ParameterValue": ""}
+    ],
+    "parameters_from_outputs": [
+        {"output_key": "VpcId", "parameter_key": "VpcId"}
+    ],
+    "outputs": ["S3VpcEndpointId"]
+}
 ]
-
 def wait_for_completion(stack_name, operation):
+    """Wait for a CloudFormation stack operation to complete."""
     waiter_name = 'stack_create_complete' if operation == 'create_stack' else 'stack_update_complete'
     waiter = cf.get_waiter(waiter_name)
     logger.info(f"Waiting for {stack_name} to {operation.replace('_', ' ')}...")
@@ -141,8 +154,10 @@ def wait_for_completion(stack_name, operation):
         logger.info(f"{stack_name} {operation.replace('_', ' ')} completed successfully.")
     except Exception as e:
         logger.error(f"Error during stack wait: {e}")
+        sys.exit(1)  # Exit if waiting fails
 
 def get_stack_status(stack_name):
+    """Retrieve the current status of a CloudFormation stack."""
     try:
         response = cf.describe_stacks(StackName=stack_name)
         return response['Stacks'][0]['StackStatus']
@@ -153,6 +168,7 @@ def get_stack_status(stack_name):
         return None
 
 def deploy_stack(stack_def, collected_outputs):
+    """Deploy a CloudFormation stack based on the provided definition."""
     stack_name = stack_def["name"]
     template_path = os.path.join(TEMPLATE_DIR, stack_def["template"])
 
@@ -195,8 +211,6 @@ def deploy_stack(stack_def, collected_outputs):
             logger.error(f"Invalid parameter mapping in stack {stack_name}: {p}")
             return False
 
-
-
     stack_status = get_stack_status(stack_name)
     try:
         if not stack_status:
@@ -233,6 +247,7 @@ def deploy_stack(stack_def, collected_outputs):
         return False
 
 def get_stack_outputs(stack_name):
+    """Retrieve the outputs of a CloudFormation stack."""
     try:
         response = cf.describe_stacks(StackName=stack_name)
         return {o['OutputKey']: o['OutputValue'] for o in response['Stacks'][0].get('Outputs', [])}
@@ -241,6 +256,7 @@ def get_stack_outputs(stack_name):
         return {}
 
 def set_vpc_dns_attributes(vpc_id):
+    """Enable DNS support and hostnames for the specified VPC."""
     try:
         ec2.modify_vpc_attribute(VpcId=vpc_id, EnableDnsSupport={'Value': True})
         ec2.modify_vpc_attribute(VpcId=vpc_id, EnableDnsHostnames={'Value': True})
@@ -248,8 +264,6 @@ def set_vpc_dns_attributes(vpc_id):
     except ClientError as e:
         logger.error(f"Failed to modify VPC DNS attributes: {e}")
         sys.exit(1)
-
-from datetime import datetime  # Add this at the top if not present
 
 if __name__ == "__main__":
     collected_outputs = {}
@@ -267,8 +281,8 @@ if __name__ == "__main__":
             else:
                 logger.warning(f"Output '{key}' not found in {stack['name']}")
 
-        # === DERIVED OUTPUTS after test-vpc-stack ===
-        if stack["name"] == "test-vpc-stack":
+        # === DERIVED OUTPUTS after LZvpcStack ===
+        if stack["name"] == "LZvpcStack":
             # Build ALBSubnetIds
             alb_required = ["ALBSubnet1Id", "ALBSubnet2Id", "ALBSubnet3Id"]
             if all(k in collected_outputs for k in alb_required):
@@ -308,6 +322,23 @@ if __name__ == "__main__":
             # Enable DNS attributes
             set_vpc_dns_attributes(collected_outputs["VpcId"])
 
-            logger.info("\n--- Derived Outputs after test-vpc-stack ---")
+            logger.info("\n--- Derived Outputs after LZvpcStack ---")
             for k in ["ALBSubnetIds", "APIGWSubnetIds", "SFTPSubnetIds", "GWLBSubnetIds"]:
                 logger.info(f"{k}: {collected_outputs[k]}")
+
+# ... validate GWLB Endpoint ...
+try:
+    result = subprocess.run(
+        ["python", "validate_gwlb_endpoint.py"],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    logger.info("[validate_gwlb_endpoint.py] Output:\n" + result.stdout)
+    if result.stderr:
+        logger.warning("[validate_gwlb_endpoint.py] Errors:\n" + result.stderr)
+except subprocess.CalledProcessError as e:
+    logger.error(f"Error running validate_gwlb_endpoint.py: {e}")
+    logger.error(f"Stdout: {e.stdout}")
+    logger.error(f"Stderr: {e.stderr}")
+    sys.exit(1)
